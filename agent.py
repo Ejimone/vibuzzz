@@ -45,6 +45,10 @@ async def entrypoint(ctx: agents.JobContext):
         instructions="Greet the user and offer your assistance."
     )
 
-
 if __name__ == "__main__":
-    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
+    agents.cli.run_app(agents.WorkerOptions(
+        entrypoint_fnc=entrypoint,
+
+        # agent_name is required for explicit dispatch
+        agent_name="Grant"
+    ))

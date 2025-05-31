@@ -3,5 +3,12 @@
     "dispatchRuleIndividual": {
       "roomPrefix": "call-"
     }
+  },
+  "roomConfig": {
+    "agents": [
+      {
+        "agentName": "Grant"
+      }
+    ]
   }
 }
