@@ -1,4 +1,5 @@
 {
+  "name": "opencodehq",
   "rule": {
     "dispatchRuleIndividual": {
       "roomPrefix": "call-"

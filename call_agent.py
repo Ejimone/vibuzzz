@@ -28,9 +28,10 @@ from livekit.plugins import (
 )
 from livekit.plugins.turn_detector.english import EnglishModel
 
+console_user = "+12193276942"
 
 # load environment variables, this is optional, only used for local development
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env")
 logger = logging.getLogger("outbound-caller")
 logger.setLevel(logging.INFO)
 
@@ -47,7 +48,7 @@ class OutboundCaller(Agent):
     ):
         super().__init__(
             instructions=f"""
-            You are a scheduling assistant for a dental practice. Your interface with user will be voice.
+            You are a scheduling assistant for a dental practice and hospital reception. Your interface with user will be voice.
             You will be on a call with a patient who has an upcoming appointment. Your goal is to confirm the appointment details.
             As a customer service representative, you will be polite and professional at all times. Allow user to end the conversation.
 
@@ -171,7 +172,27 @@ async def entrypoint(ctx: JobContext):
     # dial_info is a dict with the following keys:
     # - phone_number: the phone number to dial
     # - transfer_to: the phone number to transfer the call to when requested
-    dial_info = json.loads(ctx.job.metadata)
+    dial_info: dict[str, Any]
+    if ctx.job.metadata:
+        try:
+            dial_info = json.loads(ctx.job.metadata)
+        except json.JSONDecodeError:
+            logger.warning(
+                "Failed to parse job metadata. Using default dial_info for console mode."
+            )
+            # Default for console mode if metadata is not valid JSON
+            dial_info = {
+                "phone_number": "console_user",
+                "transfer_to": "1234567890",  # Example transfer number
+            }
+    else:
+        logger.info("No job metadata found. Using default dial_info for console mode.")
+        # Default for console mode
+        dial_info = {
+            "phone_number": "console_user",
+            "transfer_to": "+917204218098",  # transfer number
+        }
+
     participant_identity = phone_number = dial_info["phone_number"]
 
     # look up the user's phone number and appointment details
@@ -208,23 +229,34 @@ async def entrypoint(ctx: JobContext):
 
     # `create_sip_participant` starts dialing the user
     try:
-        await ctx.api.sip.create_sip_participant(
-            api.CreateSIPParticipantRequest(
-                room_name=ctx.room.name,
-                sip_trunk_id=outbound_trunk_id,
-                sip_call_to=phone_number,
-                participant_identity=participant_identity,
-                # function blocks until user answers the call, or if the call fails
-                wait_until_answered=True,
+        # In console mode, we don't actually dial a SIP participant
+        if phone_number != "console_user":
+            await ctx.api.sip.create_sip_participant(
+                api.CreateSIPParticipantRequest(
+                    room_name=ctx.room.name,
+                    sip_trunk_id=outbound_trunk_id,
+                    sip_call_to=phone_number,
+                    participant_identity=participant_identity,
+                    # function blocks until user answers the call, or if the call fails
+                    wait_until_answered=True,
+                )
             )
-        )
 
         # wait for the agent session start and participant join
         await session_started
-        participant = await ctx.wait_for_participant(identity=participant_identity)
-        logger.info(f"participant joined: {participant.identity}")
-
-        agent.set_participant(participant)
+        # In console mode, the participant might be the local user
+        if phone_number == "console_user":
+            # For console mode, we might not have a remote participant in the same way.
+            # We'll simulate this by setting the agent's participant to None or a mock
+            # if needed, or rely on the local console interaction.
+            # For now, let's assume the console handles this and we might not get a typical participant.
+            logger.info("Console mode: Skipping wait_for_participant for SIP user.")
+            # If your agent logic strictly requires a participant object,
+            # you might need to mock one here for console testing.
+        else:
+            participant = await ctx.wait_for_participant(identity=participant_identity)
+            logger.info(f"participant joined: {participant.identity}")
+            agent.set_participant(participant)
 
     except api.TwirpError as e:
         logger.error(

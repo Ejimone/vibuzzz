@@ -1,9 +1,9 @@
 {
   "trunk": {
-    "name": "My outbound trunk",
-    "address": "<my-trunk-domain-name>",
-    "numbers": ["+15105550123"],
-    "auth_username": "<username>",
+    "name": "opencodehq",
+    "address": "0.0.0.0/0",
+    "numbers": ["+12193276942"],
+    "auth_username": "Grant",
     "auth_password": "<password>"
   }
 }
