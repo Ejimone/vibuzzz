@@ -13,7 +13,7 @@ token = api.AccessToken(os.getenv('LIVEKIT_API_KEY'), os.getenv('LIVEKIT_API_SEC
     .with_name("name") \
     .with_grants(api.VideoGrants(
         room_join=True,
-        room="my-room",
+        room="my-r`oom",
     )).to_jwt()
 
 async def main():

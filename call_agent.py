@@ -53,7 +53,7 @@ class OutboundCaller(Agent):
             As a customer service representative, you will be polite and professional at all times. Allow user to end the conversation.
 
             When the user would like to be transferred to a human agent, first confirm with them. upon confirmation, use the transfer_call tool.
-            The customer's name is {name}. His appointment is on {appointment_time}.
+            ask the user their name and appointment
             """
         )
         # keep reference to the participant for transfers
